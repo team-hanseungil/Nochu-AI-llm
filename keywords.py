@@ -4,18 +4,33 @@ import os
 import dotenv
 from emotion_explanation import get_emotion_explanation
 import json
+from fastapi import FastAPI
+from pydantic import BaseModel
 
-def get_keywords(emotions: json):
+app = FastAPI()
+
+class Emotions(BaseModel):
+    행복: float
+    당황: float
+    분노: float
+    불안: float
+    상처: float
+    슬픔: float
+
+
+@app.post("/api/ai/keywords")
+async def get_keywords(emotions: Emotions):
     dotenv.load_dotenv()
 
     model = ChatGoogleGenerativeAI(model="gemini-flash-latest",
                                    google_api_key=os.getenv("GOOGLE_API_KEY"))
 
+    print(emotions)
     prompt = ChatPromptTemplate.from_messages([
         ("system", """
             당신은 Spotify Search API(q 파라미터)를 위한 음악 검색 키워드 생성 전문가입니다.
 
-            **입력**: 감정 분석 결과 JSON (dominant_emotion, emotion_summary, recommended_actions 포함)
+            **입력**: 감정 분석 결과 JSON
             
             **생성 규칙**:
             1. **세 가지 정보 모두 종합 분석**
@@ -46,19 +61,22 @@ def get_keywords(emotions: json):
                - 따옴표, JSON, 추가 설명 텍스트
             
             **출력 형식**:
-            키워드: [키워드1, 키워드2, 키워드3]
-            제목: [플레이리스트 제목]
+            [키워드1, 키워드2, 키워드3]
+            [플레이리스트 제목]
             
             **입력 예시**:
             {{
-              "dominant_emotion": "기쁨",
-              "emotion_summary": "기분이 좋고 에너지가 넘치는 상태입니다.",
-              "recommended_actions": ["활기찬 활동하기", "친구들과 시간 보내기", "신나는 음악 듣기"]
+               "행복": 0.6,
+               "당황": 0.1,
+               "분노": 0.1,
+               "불안": 0.1,
+               "상처": 0,
+               "슬픔": 0.1
             }}
             
             **출력 예시**:
-            키워드: 신나는 팝, 경쾌한 댄스, 행복 인디
-            제목: 기분 좋은 하루
+            신나는 팝, 경쾌한 댄스, 행복 인디
+            기분 좋은 하루
 
     """),
 
@@ -69,7 +87,12 @@ def get_keywords(emotions: json):
 
     resp = chain.invoke({"emotions": emotions})
 
-    return resp.content
+    result = resp.content[0]["text"]
+
+    keywords, title = result.split("\n")
+
+    return {"keywords": keywords,
+            "title": title}
 
 if __name__ == "__main__":
     emotion=get_emotion_explanation()
