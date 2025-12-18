@@ -30,7 +30,7 @@ async def get_keywords(emotions: Emotions):
         ("system", """
             당신은 Spotify Search API(q 파라미터)를 위한 음악 검색 키워드 생성 전문가입니다.
 
-            **입력**: 감정 분석 결과 JSON
+            **입력**: 감정 분석 결과 JSON 모든 감정의 점수의 합은 1이다.
             
             **생성 규칙**:
             1. **세 가지 정보 모두 종합 분석**
@@ -51,9 +51,10 @@ async def get_keywords(emotions: Emotions):
             
             4. **플레이리스트 제목**
                - 사용자의 감정 상태와 음악의 역할을 반영한 제목
-               - 간결하고 공감 가능한 한글 제목 (10자 내외)
-               - 예: "마음을 다독이는 시간", "조용한 위로"
-            
+               - 간결하고 공감 가능한 한글 제목 (20자 내외)
+               - 예: "당신의 마음을 다독이는 플레이리스트", "당신에게 조용한 위로를 건네는 플레이리스트"
+               - 반드시 플레이리스트로 끝낼 것
+         
             5. **금지 사항**
                - 완전한 문장, 가사 형태
                - 조사(은/는/이/가) 사용
@@ -63,6 +64,7 @@ async def get_keywords(emotions: Emotions):
             **반드시 지켜야할 출력 형식**:
             키워드1, 키워드2, 키워드3
             플레이리스트 제목
+            **content에 json 형식이나 다른 텍스트 절대 포함 금지**
             
             **입력 예시**:
             {{
@@ -76,7 +78,7 @@ async def get_keywords(emotions: Emotions):
             
             **출력 예시**:
             신나는 팝, 경쾌한 댄스, 행복 인디
-            기분 좋은 하루
+            기분 좋은 하루를 위한 플레이리스트
 
     """),
 
@@ -87,12 +89,15 @@ async def get_keywords(emotions: Emotions):
 
     resp = chain.invoke({"emotions": emotions})
 
-    result = resp.content[0]["text"]
+    try:
+      result = resp.content[0]["text"]
 
-    keywords, title = result.split("\n")
+      keywords, title = result.split("\n")
+    except Exception as e:
+      keywords, title = resp.content.split("\n")
+      return {"keywords": keywords.strip(), "title": title.strip()}
 
-    return {"keywords": keywords,
-            "title": title}
+    return {"keywords": keywords.strip(), "title": title.strip()}
 
 if __name__ == "__main__":
     emotion=get_emotion_explanation()
