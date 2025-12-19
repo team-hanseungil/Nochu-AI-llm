@@ -10,12 +10,12 @@ from pydantic import BaseModel
 app = FastAPI()
 
 class Emotions(BaseModel):
-    행복: float
-    당황: float
-    분노: float
-    불안: float
-    상처: float
-    슬픔: float
+    happy: float
+    surprise: float
+    anger: float
+    anxiety: float
+    hurt: float
+    sad: float
 
 
 @app.post("/api/ai/keywords")
@@ -68,12 +68,12 @@ async def get_keywords(emotions: Emotions):
             
             **입력 예시**:
             {{
-               "행복": 0.6,
-               "당황": 0.1,
-               "분노": 0.1,
-               "불안": 0.1,
-               "상처": 0,
-               "슬픔": 0.1
+               "happy": 0.6,
+               "surprise": 0.1,
+               "anger": 0.1,
+               "anxiety": 0.1,
+               "hurt": 0,
+               "sad": 0.1
             }}
             
             **출력 예시**:
