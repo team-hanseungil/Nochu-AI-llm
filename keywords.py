@@ -99,6 +99,11 @@ async def get_keywords(emotions: Emotions):
 
     return {"keywords": keywords.strip(), "title": title.strip()}
 
+@app.get("/health")
+async def health():
+   return {"status": "ok"}
+
+
 if __name__ == "__main__":
     emotion=get_emotion_explanation()
     print("Emotion Explanation JSON:", emotion)
